@@ -17,29 +17,66 @@ const DateRangeComp = () => {
   const [range, setRange] = useState([
     {
       startDate: start,
-      endDate: addDays(start, 7),
+      endDate: start,
       key: "selection",
     },
   ]);
-  const [price, setPrice] = useState(0);
-  const prices = [{ price1: 414.28 }, { price2: 385.71 }, { price3: 357.14 }];
 
-  const dates = [];
-  function getDatesBetween() {
-    const currentDate = new Date(range[0].startDate.getTime());
+  const rates = [
+    { date: new Date(2024, 5, 15), price: 100 },
+    { date: new Date(2024, 5, 16), price: 100 },
+    { date: new Date(2024, 5, 17), price: 100 },
+    { date: new Date(2024, 5, 18), price: 100 },
+    { date: new Date(2024, 5, 19), price: 100 },
+    { date: new Date(2024, 5, 20), price: 100 },
+    { date: new Date(2024, 5, 21), price: 100 },
+    { date: new Date(2024, 5, 22), price: 100 },
+    { date: new Date(2024, 5, 23), price: 100 },
+    { date: new Date(2024, 5, 24), price: 100 },
+    { date: new Date(2024, 5, 25), price: 100 },
+    { date: new Date(2024, 5, 26), price: 100 },
+    { date: new Date(2024, 5, 27), price: 100 },
+    { date: new Date(2024, 5, 28), price: 100 },
+    { date: new Date(2024, 5, 29), price: 100 },
+    { date: new Date(2024, 5, 30), price: 100 },
+    { date: new Date(2024, 6, 23), price: 100 },
+    { date: new Date(2024, 6, 24), price: 100 },
+    { date: new Date(2024, 6, 13), price: 200 },
+    { date: new Date(2024, 6, 20), price: 210 },
+  ];
+  useEffect(() => {
+    getDatesBetween(range[0].startDate, range[0].endDate);
+  }, [range[0].startDate, range[0].endDate]);
 
-    while (currentDate <= range[0].endDate) {
-      dates.push(new Date(currentDate).getMonth());
+  const getDatesBetween = (startDate, endDate) => {
+    const currentDate = new Date(startDate.getTime());
+    const dates = [];
+    while (currentDate < endDate) {
       currentDate.setDate(currentDate.getDate() + 1);
+      dates.push(currentDate.toString());
     }
-    calculatePrice(dates);
-  }
-  const calculatePrice = (dates) => {
-    for (let i = 0; i < dates.length; i++) {
-      console.log(dates[i]);
-    }
+    return getPrice(dates);
   };
-
+  let total = 0;
+  const getPrice = (dates) => {
+    const selectedDates = rates.filter((rate) =>
+      dates.includes(rate.date.toString())
+    );
+    for (let i = 0; i < selectedDates.length; i++) {
+      total += selectedDates[i].price;
+    }
+    return setPrice(total);
+  };
+  const [dates, setDates] = useState([]);
+  const [price, setPrice] = useState(0);
+  /*   const getPrice = (date) => {
+    rates.map((rate) => {
+      if (date.toString() == rate.date.toString()) {
+        console.log(date);
+      }
+    });
+  }; */
+  /*  console.log(getDatesBetween()); */
   const [open, setOpen] = useState(false);
   const refOne = useRef(null);
   useEffect(() => {
@@ -78,7 +115,6 @@ const DateRangeComp = () => {
           <DateRange
             onChange={(item) => {
               setRange([item.selection]);
-              getDatesBetween(getDatesBetween());
             }}
             edittableDateInputs={true}
             moveRangeOnFirstSelection={false}
@@ -87,11 +123,9 @@ const DateRangeComp = () => {
             showMonthArrow={true}
             showMonthAndYearPickers={false}
             locale={rdrLocales.fr}
-            /*  disabledDates={disabledDates} */
             disabledDay={isSaturday}
             minDate={new Date(2024, 5, 15)}
             maxDate={new Date(2024, 8, 15)}
-            /*   disabledDates={[new Date(2023, 7, 9)]} */
             months={2}
             direction="horizontal"
             className="calendarElement"

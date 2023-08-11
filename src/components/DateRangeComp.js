@@ -1,18 +1,18 @@
 import React, { useEffect, useRef, useState } from "react";
 import { DateRange } from "react-date-range";
 import format from "date-fns/format";
-import { addDays, getDay, getMonth } from "date-fns";
+import { getDay } from "date-fns";
 import * as rdrLocales from "react-date-range/dist/locale";
 
 import "react-date-range/dist/styles.css"; // main style file
 import "react-date-range/dist/theme/default.css"; // theme css file
 
-const isSaturday = (date) => {
-  const day = getDay(date);
-  return day !== 6;
-};
-
 const DateRangeComp = () => {
+  const isSaturday = (date) => {
+    const day = getDay(date);
+    return day !== 6;
+  };
+  const [editorActive, setEditorActive] = useState(false);
   const start = new Date(2024, 5, 15);
   const [range, setRange] = useState([
     {
@@ -22,7 +22,7 @@ const DateRangeComp = () => {
     },
   ]);
 
-  const rates = [
+  const [rates, setRates] = useState([
     { date: new Date(2024, 5, 15), price: 100 },
     { date: new Date(2024, 5, 16), price: 100 },
     { date: new Date(2024, 5, 17), price: 100 },
@@ -43,10 +43,12 @@ const DateRangeComp = () => {
     { date: new Date(2024, 6, 24), price: 100 },
     { date: new Date(2024, 6, 13), price: 200 },
     { date: new Date(2024, 6, 20), price: 210 },
-  ];
+  ]);
   useEffect(() => {
     getDatesBetween(range[0].startDate, range[0].endDate);
   }, [range[0].startDate, range[0].endDate]);
+
+  const [dates, setDates] = useState([]);
 
   const getDatesBetween = (startDate, endDate) => {
     const currentDate = new Date(startDate.getTime());
@@ -55,10 +57,14 @@ const DateRangeComp = () => {
       currentDate.setDate(currentDate.getDate() + 1);
       dates.push(currentDate.toString());
     }
-    return getPrice(dates);
+    return setDates(dates);
   };
-  let total = 0;
+
+  useEffect(() => {
+    editorActive ? handleEditRates(dates) : getPrice(dates);
+  }, [getDatesBetween]);
   const getPrice = (dates) => {
+    let total = 0;
     const selectedDates = rates.filter((rate) =>
       dates.includes(rate.date.toString())
     );
@@ -67,16 +73,7 @@ const DateRangeComp = () => {
     }
     return setPrice(total);
   };
-  const [dates, setDates] = useState([]);
   const [price, setPrice] = useState(0);
-  /*   const getPrice = (date) => {
-    rates.map((rate) => {
-      if (date.toString() == rate.date.toString()) {
-        console.log(date);
-      }
-    });
-  }; */
-  /*  console.log(getDatesBetween()); */
   const [open, setOpen] = useState(false);
   const refOne = useRef(null);
   useEffect(() => {
@@ -84,7 +81,6 @@ const DateRangeComp = () => {
     document.addEventListener("click", hideOnClickOutside, true);
   }, []);
   const hideOnEscape = (e) => {
-    /*     console.log(e.key); */
     if (e.key === "Escape") {
       setOpen(false);
     }
@@ -93,12 +89,18 @@ const DateRangeComp = () => {
     if (refOne.current && !refOne.current.contains(e.target)) {
       setOpen(false);
     }
-    /*     console.log(refOne.current);
-    console.log(e.target); */
   };
-
+  const handleEditRates = (dates) => {
+    const newRates = rates.filter((rate) =>
+      dates.includes(rate.date.toString())
+    );
+    newRates.map((newRate) => {
+      newRate.price = 10;
+    });
+  };
   return (
     <div className="calendarWrap">
+      <button onClick={() => setEditorActive(!editorActive)}>Editor</button>
       <input
         value={` ${format(range[0].startDate, "dd/MM/yyyy")} à ${format(
           range[0].endDate,
@@ -124,7 +126,7 @@ const DateRangeComp = () => {
             showMonthAndYearPickers={false}
             locale={rdrLocales.fr}
             disabledDay={isSaturday}
-            minDate={new Date(2024, 5, 15)}
+            minDate={new Date()}
             maxDate={new Date(2024, 8, 15)}
             months={2}
             direction="horizontal"
@@ -132,6 +134,13 @@ const DateRangeComp = () => {
           />
         )}
       </div>
+      {editorActive && (
+        <div>
+          <h3>change rates</h3>
+          <input type="text" />
+          <input onClick={() => handleEditRates()} type="submit" />
+        </div>
+      )}
       <h3>{price}</h3>
     </div>
   );

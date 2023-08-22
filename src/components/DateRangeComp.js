@@ -6,22 +6,10 @@ import * as rdrLocales from "react-date-range/dist/locale";
 
 import "react-date-range/dist/styles.css"; // main style file
 import "react-date-range/dist/theme/default.css"; // theme css file
+import { nb } from "date-fns/locale";
 
 const DateRangeComp = () => {
-  const isSaturday = (date) => {
-    const day = getDay(date);
-    return day !== 6;
-  };
   const [editorActive, setEditorActive] = useState(false);
-  const start = new Date(2024, 5, 15);
-  const [range, setRange] = useState([
-    {
-      startDate: start,
-      endDate: start,
-      key: "selection",
-    },
-  ]);
-
   const [rates, setRates] = useState([
     { date: new Date(2024, 5, 15), price: 100 },
     { date: new Date(2024, 5, 16), price: 100 },
@@ -44,25 +32,55 @@ const DateRangeComp = () => {
     { date: new Date(2024, 6, 13), price: 200 },
     { date: new Date(2024, 6, 20), price: 210 },
   ]);
-  useEffect(() => {
-    getDatesBetween(range[0].startDate, range[0].endDate);
-  }, [range[0].startDate, range[0].endDate]);
+  const minDate = () => {
+    const year = new Date().getYear() - 100 + 2001;
+    return new Date(year, 6, 1);
+  };
+  const start = minDate();
+  const [range, setRange] = useState([
+    {
+      startDate: start,
+      endDate: start,
+      key: "selection",
+    },
+  ]);
 
+  const [disabledDates, setDisabledDates] = useState([new Date(2024, 6, 13)]);
+  const handleDisabledDates = () => {
+    setDisabledDates(dates);
+  };
+
+  const isSaturday = (date) => {
+    const day = getDay(date);
+    return day !== 6;
+  };
   const [dates, setDates] = useState([]);
 
   const getDatesBetween = (startDate, endDate) => {
     const currentDate = new Date(startDate.getTime());
-    const dates = [];
+
     while (currentDate < endDate) {
       currentDate.setDate(currentDate.getDate() + 1);
-      dates.push(currentDate.toString());
+      setDates([...dates, currentDate]);
     }
-    return setDates(dates);
   };
 
-  useEffect(() => {
-    editorActive ? handleEditRates(dates) : getPrice(dates);
-  }, [getDatesBetween]);
+  /*   useEffect(() => {
+    getDatesBetween(range[0].startDate, range[0].endDate);
+  }, [range[0].startDate, range[0].endDate]); */
+
+  const [editRates, setEditRates] = useState(false);
+
+  // useEffect(() => {
+  //   editorActive
+  //     ? editRates
+  //       ? handleEditRates(dates)
+  //       : /* handleDisabledDates(dates) */ null
+  //     : getPrice(dates);
+  // }, [getDatesBetween]);
+
+  const [price, setPrice] = useState(0);
+
   const getPrice = (dates) => {
     let total = 0;
     const selectedDates = rates.filter((rate) =>
@@ -73,23 +91,25 @@ const DateRangeComp = () => {
     }
     return setPrice(total);
   };
-  const [price, setPrice] = useState(0);
-  const [open, setOpen] = useState(false);
-  const refOne = useRef(null);
+
   useEffect(() => {
     document.addEventListener("keydown", hideOnEscape, true);
     document.addEventListener("click", hideOnClickOutside, true);
   }, []);
+  const [open, setOpen] = useState(false);
   const hideOnEscape = (e) => {
     if (e.key === "Escape") {
       setOpen(false);
     }
   };
+  const refOne = useRef(null);
   const hideOnClickOutside = (e) => {
     if (refOne.current && !refOne.current.contains(e.target)) {
       setOpen(false);
     }
   };
+
+  // TO DO
   const handleEditRates = (dates) => {
     const newRates = rates.filter((rate) =>
       dates.includes(rate.date.toString())
@@ -98,6 +118,7 @@ const DateRangeComp = () => {
       newRate.price = 10;
     });
   };
+  //
   return (
     <div className="calendarWrap">
       <button onClick={() => setEditorActive(!editorActive)}>Editor</button>
@@ -118,6 +139,7 @@ const DateRangeComp = () => {
             onChange={(item) => {
               setRange([item.selection]);
             }}
+            onClick={getDatesBetween(range[0].startDate, range[0].endDate)}
             edittableDateInputs={true}
             moveRangeOnFirstSelection={false}
             ranges={range}
@@ -125,6 +147,7 @@ const DateRangeComp = () => {
             showMonthArrow={true}
             showMonthAndYearPickers={false}
             locale={rdrLocales.fr}
+            disabledDates={disabledDates}
             disabledDay={isSaturday}
             minDate={new Date()}
             maxDate={new Date(2024, 8, 15)}
@@ -136,9 +159,11 @@ const DateRangeComp = () => {
       </div>
       {editorActive && (
         <div>
-          <h3>change rates</h3>
+          <button onClick={() => setEditRates(!editRates)}>
+            {editRates ? "Edit Rates" : "Block Dates"}
+          </button>
           <input type="text" />
-          <input onClick={() => handleEditRates()} type="submit" />
+          <input onClick={() => handleDisabledDates()} type="submit" />
         </div>
       )}
       <h3>{price}</h3>

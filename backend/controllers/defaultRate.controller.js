@@ -12,6 +12,7 @@ module.exports.setDefaultRate = async (req, res) => {
   const defaultRate = await DefaultRateModel.create([
     {
       defaultRate: req.body.defaultRate,
+      accomodation: req.body.accomodation,
     },
   ]);
   res.status(200).json(defaultRate);
